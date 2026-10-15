@@ -10,7 +10,19 @@ cd "$KERNEL_DIR"
 mkdir -p "$OUT_DIR"
 
 echo "::group::Configure kernel"
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- "${KERNEL_DEFCONFIG:-sanders_defconfig}"
+# Build a real ARM64 base configuration and apply the platform + device
+# fragments shipped by the selected mainline source. These *.config files
+# are Kconfig fragments, not make *_defconfig targets.
+CONFIGS_DIR="$KERNEL_DIR/arch/arm64/configs"
+MSM8953_CONFIG="$CONFIGS_DIR/msm8953.config"
+SANDERS_CONFIG="$CONFIGS_DIR/motorola-sanders.config"
+for fragment in "$MSM8953_CONFIG" "$SANDERS_CONFIG"; do
+  test -s "$fragment" || { echo "Missing kernel config fragment: $fragment" >&2; exit 1; }
+done
+test -f scripts/kconfig/merge_config.sh || { echo 'Missing Kconfig merge helper.' >&2; exit 1; }
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bash scripts/kconfig/merge_config.sh -m \
+  .config "$MSM8953_CONFIG" "$SANDERS_CONFIG"
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
 required_y=(
