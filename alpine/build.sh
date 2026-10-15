@@ -90,8 +90,10 @@ sudo "$APK_STATIC" \
     e2fsprogs \
     procps \
     less nano \
-    ethtool \
+    ethtool iw \
     dbus dbus-openrc \
+    networkmanager networkmanager-openrc networkmanager-cli networkmanager-wifi \
+    wpa_supplicant wireless-regdb \
     openssl
 
 sudo chroot "$ROOTFS" /usr/sbin/update-ca-certificates
@@ -130,7 +132,7 @@ fi
 
 sudo chroot "$ROOTFS" /usr/bin/ssh-keygen -A
 
-# Use eudev for generic device management; avoid a second device manager.
+# Build an explicit OpenRC runlevel set. NetworkManager on Alpine requires
 # eudev; never run mdev and udev as competing device managers.
 sudo chroot "$ROOTFS" /sbin/rc-update del mdev sysinit 2>/dev/null || true
 for service in devfs dmesg udev udev-trigger udev-settle; do
@@ -139,20 +141,27 @@ done
 for service in hwdrivers modules sysctl hostname bootmisc syslog localmount; do
   sudo chroot "$ROOTFS" /sbin/rc-update add "$service" boot
 done
-for service in udev-postmount dbus sanders-usb-gadget dnsmasq sanders-sshd; do
+for service in udev-postmount dbus sanders-usb-gadget dnsmasq sanders-sshd networkmanager; do
   sudo chroot "$ROOTFS" /sbin/rc-update add "$service" default
 done
 
 
+# NetworkManager owns wlan0 and launches the wpa_supplicant backend itself.
+# Keep Alpine's legacy networking and standalone supplicant services disabled.
 sudo chroot "$ROOTFS" /sbin/rc-update del networking boot 2>/dev/null || true
+sudo chroot "$ROOTFS" /sbin/rc-update del wpa_supplicant boot 2>/dev/null || true
 
 test -x "$ROOTFS/sbin/udevd"
 test -L "$ROOTFS/etc/runlevels/sysinit/udev"
 test -L "$ROOTFS/etc/runlevels/sysinit/udev-trigger"
 test -L "$ROOTFS/etc/runlevels/sysinit/udev-settle"
 test -L "$ROOTFS/etc/runlevels/default/udev-postmount"
+test -L "$ROOTFS/etc/runlevels/default/networkmanager"
 test ! -e "$ROOTFS/etc/runlevels/sysinit/mdev"
 test ! -e "$ROOTFS/etc/runlevels/boot/networking"
+test ! -e "$ROOTFS/etc/runlevels/boot/wpa_supplicant"
+grep -Fqx 'unmanaged-devices=interface-name:usb0' "$ROOTFS/etc/NetworkManager/conf.d/10-sanders.conf"
+grep -Fqx 'wifi.backend=wpa_supplicant' "$ROOTFS/etc/NetworkManager/conf.d/10-sanders.conf"
 
 # This image is intentionally headless. Alpine's init spawns gettys from
 # /etc/inittab, independently of OpenRC runlevel links. Remove both forms so
@@ -220,6 +229,8 @@ echo "::endgroup::"
   echo "ssh_auth=ssh"
   echo "ssh_listen=172.16.42.1"
   echo "ssh_scope=usb-only"
+  echo "wifi_manager=NetworkManager"
+  echo "wifi_runtime_setup=nmcli"
   echo "usb_network_manager=unmanaged"
 } > "$OUT_DIR/build-info.txt"
 
