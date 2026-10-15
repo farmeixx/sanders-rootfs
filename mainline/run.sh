@@ -29,16 +29,21 @@ git clone --depth=1 --branch "$KERNEL_REF" "$KERNEL_URL" "$KERNEL_DIR"
 [ -s "$KERNEL_DIR/arch/arm64/boot/dts/qcom/msm8953-motorola-sanders.dts" ] || {
   echo 'ERROR: Sanders device-tree source is missing.' >&2; exit 1;
 }
-KERNEL_DEFCONFIG="${KERNEL_DEFCONFIG:-sanders_defconfig}"
-[[ "$KERNEL_DEFCONFIG" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo 'ERROR: Invalid kernel defconfig name.' >&2; exit 1; }
-[ -s "$KERNEL_DIR/arch/arm64/configs/$KERNEL_DEFCONFIG" ] || {
-  echo "ERROR: Sanders defconfig missing in kernel source: arch/arm64/configs/$KERNEL_DEFCONFIG" >&2
-  echo 'Import the verified Sanders defconfig; no fallback to generic or other devices.' >&2
+# Platform and Sanders configuration are separate upstream Kconfig fragments.
+# Check their presence before any compilation. Never use another device's config.
+CONFIG_DIR="$KERNEL_DIR/arch/arm64/configs"
+for fragment in msm8953.config motorola-sanders.config; do
+  [ -s "$CONFIG_DIR/$fragment" ] || {
+    echo "ERROR: Missing kernel config fragment: $CONFIG_DIR/$fragment" >&2
+    exit 1
+  }
+done
+[ -f "$KERNEL_DIR/scripts/kconfig/merge_config.sh" ] || {
+  echo 'ERROR: Kernel config fragment merge helper unavailable.' >&2
   exit 1
 }
-export KERNEL_DEFCONFIG
 printf 'kernel_url=%s\nkernel_ref=%s\nkernel_source_sha=%s\n' "$KERNEL_URL" "$KERNEL_REF" "$SOURCE_SHA" > "$STAGING/source-report.txt"
-printf 'kernel_defconfig=%s\n' "$KERNEL_DEFCONFIG" >> "$STAGING/source-report.txt"
+printf 'kernel_config_fragments=%s\n' 'msm8953.config,motorola-sanders.config' >> "$STAGING/source-report.txt"
 export KERNEL_DIR OUT_DIR="$STAGING"
 bash "$ROOT/mainline/build.sh"
 KREL="$(cat "$STAGING/kernel-release.txt")"
