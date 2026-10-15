@@ -1,5 +1,3 @@
-# Dispatch on main; use alpine branch's scripts and bundled firmware.
-# No kernel build/dispatch: the shell script fetches an existing mainline checkpoint.
 name: Build alpine rootfs
 on:
   workflow_dispatch:
@@ -11,13 +9,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   rootfs:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/alpine'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: alpine
       - name: Reuse kernel checkpoint and build alpine via shell
         env:
           GH_TOKEN: ${{ github.token }}
