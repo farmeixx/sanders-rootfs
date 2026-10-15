@@ -20,6 +20,6 @@ Each distro uploads `*-sanders-rootfs.ext4.zst`, `boot.img`, and `rootfs.ext4`.
 
 ## No Wi-Fi integration
 
-Channel WCNSS blobs, WCN36xx-specific config checks, firmware installer, NetworkManager Wi-Fi setup and modem/vendor mounts are intentionally excluded. Sanders Wi-Fi is not configured or claimed working.
+Only the Channel-specific WCNSS firmware blobs, device-specific kernel Wi-Fi requirements and firmware installer are excluded. **Standard distribution userspace packages remain installed**: NetworkManager, WPA supplicant, `iw`, regulatory data, udev and their normal services. These tools do not constitute a device-specific Wi-Fi fix or guarantee hardware Wi-Fi will work. No Android modem/vendor partitions are mounted.
 
 USB RNDIS/SSH scripts are adapted from Channel but require real Sanders hardware verification. The default USB address is `172.16.42.1`; inherited root SSH access over trusted USB is permissive and should not be exposed elsewhere.
