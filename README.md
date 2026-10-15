@@ -10,7 +10,7 @@ Standalone Sanders adaptation of the existing Channel builder. The Channel repos
 
 ## Build
 
-First run **Build mainline kernel** on `main`. The existing MSM8953 source must contain `arch/arm64/configs/sanders_defconfig` from the Sanders builder and `arch/arm64/boot/dts/qcom/msm8953-motorola-sanders.dts`. There is no fallback to a generic or other-device config. If missing, the build fails before compilation.
+First run **Build mainline kernel** on `main`. The source branch `msm8953/latest` must provide `arch/arm64/configs/msm8953.config`, `arch/arm64/configs/motorola-sanders.config` and `arch/arm64/boot/dts/qcom/msm8953-motorola-sanders.dts`. The kernel builder starts from ARM64 `defconfig`, then merges **`msm8953.config` followed by `motorola-sanders.config`** with `scripts/kconfig/merge_config.sh -m`, followed by `olddefconfig`. These are configuration fragments, **not** a `sanders_defconfig` target. Missing source files cause an immediate error; no Channel-specific configuration or firmware is imported. The resulting `kernel.config` is included in the checkpoint.
 
 Its validated checkpoint contains `Image.gz`, Sanders DTB, modules, `boot-sanders.img`, SHA256SUMS and revision metadata. Boot image has the Sanders **16 MiB limit**.
 
