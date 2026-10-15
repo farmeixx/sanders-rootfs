@@ -90,7 +90,7 @@ sudo "$APK_STATIC" \
     e2fsprogs \
     procps \
     less nano \
-    ethtool iw \
+    ethtool \
     dbus dbus-openrc \
     openssl
 
