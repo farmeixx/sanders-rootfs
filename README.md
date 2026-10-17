@@ -10,9 +10,8 @@ the [`rootfs` branch](https://github.com/farmeixx/sanders-rootfs/tree/rootfs).
 - **`main`**: kernel scripts, persistent `ccache` and GitHub Actions YAMLs.
 - **`rootfs`**: `alpine/`, `debian/`, `ubuntu/`, and shared rootfs scripts.
 - **`help`**: recovery, SSH, resize2fs and usage instructions.
-- The original `alpine`, `debian` and `ubuntu` branches remain available
-  for rollback; new rootfs development belongs on `rootfs`.
-- Experimental `sanders-qcdt-reference` is separate, not used by these builders.
+- The former per-distro branches were consolidated into `rootfs`.
+- Experimental QCDT/Potter tests are not used by these builders.
 
 ## Kernel (main)
 
