@@ -1,7 +1,7 @@
 [Unit]
 Description=DHCP server for Moto G5S Plus USB RNDIS link
-Requires=sanders-usb-gadget.service
-After=sanders-usb-gadget.service
+Requires=usb-gadget.service
+After=usb-gadget.service
 
 [Service]
 Type=simple

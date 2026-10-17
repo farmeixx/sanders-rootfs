@@ -103,10 +103,14 @@ echo "::group::Install Sanders Alpine headless configuration"
 sudo cp -a "$REPO_ROOT/alpine/rootfs/." "$ROOTFS/"
 # Passive stock Sanders WCNSS/NV firmware, obtained from the Sanders GitLab repository.
 bash "$REPO_ROOT/scripts/firmware/sanders.sh" install "$ROOTFS"
+# Shared USB ConfigFS implementation; Sanders-specific values remain in its config.
+sudo install -D -m 0755 "$REPO_ROOT/scripts/usb/usb-gadget" "$ROOTFS/usr/local/sbin/usb-gadget"
+sudo install -m 0644 "$REPO_ROOT/scripts/usb/sanders.conf" "$ROOTFS/etc/usb-gadget.conf"
+test -x "$ROOTFS/usr/local/sbin/usb-gadget"
+test -s "$ROOTFS/etc/usb-gadget.conf"
 sudo chmod 0755 \
-  "$ROOTFS/usr/local/sbin/sanders-usb-gadget" \
-  "$ROOTFS/etc/init.d/sanders-usb-gadget" \
-  "$ROOTFS/etc/init.d/sanders-sshd"
+  "$ROOTFS/etc/init.d/usb-gadget" \
+  "$ROOTFS/etc/init.d/usb-sshd"
 
 sudo install -d -m 0755 "$ROOTFS/etc/ssh/sshd_config.d"
 
@@ -143,7 +147,7 @@ done
 for service in hwdrivers modules sysctl hostname bootmisc syslog localmount; do
   sudo chroot "$ROOTFS" /sbin/rc-update add "$service" boot
 done
-for service in udev-postmount dbus sanders-usb-gadget dnsmasq sanders-sshd networkmanager; do
+for service in udev-postmount dbus usb-gadget dnsmasq usb-sshd networkmanager; do
   sudo chroot "$ROOTFS" /sbin/rc-update add "$service" default
 done
 
@@ -158,6 +162,9 @@ test -L "$ROOTFS/etc/runlevels/sysinit/udev"
 test -L "$ROOTFS/etc/runlevels/sysinit/udev-trigger"
 test -L "$ROOTFS/etc/runlevels/sysinit/udev-settle"
 test -L "$ROOTFS/etc/runlevels/default/udev-postmount"
+test -L "$ROOTFS/etc/runlevels/default/usb-gadget"
+test -L "$ROOTFS/etc/runlevels/default/usb-sshd"
+test -L "$ROOTFS/etc/runlevels/default/dnsmasq"
 test -L "$ROOTFS/etc/runlevels/default/networkmanager"
 test ! -e "$ROOTFS/etc/runlevels/sysinit/mdev"
 test ! -e "$ROOTFS/etc/runlevels/boot/networking"

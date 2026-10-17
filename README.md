@@ -35,6 +35,44 @@ Outputs remain separate in `out/rootfs/alpine/`, `out/rootfs/debian/` and
 `out/rootfs/ubuntu/`, with their respective `*.ext4.zst`, `boot.img`
 and `rootfs.ext4` artifacts.
 
+## Shared USB/RNDIS services
+
+The Sanders overlays install the **same shared** `scripts/usb/usb-gadget`
+executable used by Channel. The Sanders-specific config is
+`scripts/usb/sanders.conf`, installed as `/etc/usb-gadget.conf` on all
+three distros. In particular: USB product identifies the **Moto G5S Plus**,
+serial starts with `sanders-`, device MAC is `02:00:00:00:53:01`,
+host MAC is `02:00:00:00:53:02`, and USB SSH remains on
+`172.16.42.1` via `usb0`. No Channel firmware or device configuration
+is included.
+
+Alpine uses `usb-gadget` and `usb-sshd` OpenRC services plus the
+packaged `dnsmasq` reading `/etc/dnsmasq-usb.conf`. Debian/Ubuntu
+use `usb-gadget.service`, `usb-dhcp.service` and `ssh.service`
+with the original USB-gadget dependencies preserved. Wi-Fi remains under
+NetworkManager and is not configured by USB/RNDIS.
+
+The shared helper avoids disconnecting an already-matching active
+ConfigFS gadget on repeated runs. It rejects conflicting settings and
+checks the RNDIS network interface before enabling dependent SSH/DHCP.
+**Channel USB/Wi-Fi/SSH has been tested on hardware; Sanders has NOT yet
+had equivalent hardware validation** and still needs a real boot test.
+
+## Image sizing and expansion
+
+**Debian and Ubuntu** produce fixed `1,024 MiB` uncompressed ext4 images
+with a 16 MiB journal, 32,768 inodes, and an explicit **64 MiB minimum
+free-space check** after populating the filesystem. If that cannot fit,
+the build fails safely instead of uploading a nearly-full rootfs. Alpine
+retains its existing adaptive sizing until a Sanders size measurement is
+available. These images are compressed with Zstandard for distribution.
+
+Once the ext4 is installed on the intended `userdata` partition, the
+user can expand the *filesystem* with `resize2fs` after identifying the
+actual root block device. This does not resize the partition. See the
+[Sanders help branch](https://github.com/farmeixx/sanders-rootfs/tree/help)
+for SSH, Wi-Fi, time and careful expansion commands.
+
 ## Local builds
 
 On an Ubuntu/Debian x86_64 host, place a valid Sanders kernel checkpoint

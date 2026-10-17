@@ -2,11 +2,11 @@
 Description=Moto G5S Plus USB RNDIS gadget for headless SSH
 After=systemd-modules-load.service sys-kernel-config.mount local-fs.target
 Wants=sys-kernel-config.mount
-Before=network.target ssh.service sanders-dhcp.service
+Before=network.target ssh.service usb-dhcp.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/sanders-usb-gadget
+ExecStart=/usr/local/sbin/usb-gadget
 RemainAfterExit=yes
 TimeoutStartSec=90
 
