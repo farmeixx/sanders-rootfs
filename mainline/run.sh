@@ -17,6 +17,12 @@ STAGING="$ROOT/out/kernel/.checkpoint-staging"
 CHECKPOINT="$ROOT/out/kernel/checkpoint"
 IMAGES="$ROOT/out/kernel/images"
 mkdir -p "$WORK" "$ROOT/out/kernel"
+# Reuse compiled ARM64 GCC objects across repeated builds on the same source.
+CCACHE_BIN_DIR="$WORK/ccache-bin"
+mkdir -p "$CCACHE_BIN_DIR"
+ln -sfn "$(command -v ccache)" "$CCACHE_BIN_DIR/aarch64-linux-gnu-gcc"
+export PATH="$CCACHE_BIN_DIR:$PATH"
+echo "ccache enabled for aarch64-linux-gnu-gcc"
 rm -rf "$KERNEL_DIR" "$STAGING"
 mkdir -p "$STAGING"
 
@@ -96,3 +102,4 @@ cp -f "$CHECKPOINT/boot-sanders.img" "$IMAGES/boot.img"
 cp -f "$CHECKPOINT/boot-sanders.img" "$IMAGES/boot-sanders.img"
 rm -rf "$PREVIOUS"
 printf '\nKernel build complete.\n  Checkpoint: %s\n  boot.img:   %s\n' "$CHECKPOINT" "$IMAGES/boot.img"
+ccache --show-stats

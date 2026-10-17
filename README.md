@@ -1,25 +1,68 @@
-# Moto G5S Plus (sanders) — mainline kernel
+# Moto G5S Plus (sanders) — mainline Linux builder
 
-Standalone Sanders adaptation of the existing Channel builder. The Channel repository is unchanged.
+Sanders mainline Linux builder. The `main` branch compiles the kernel,
+maintains the GitHub Actions entry workflows and publishes a reusable,
+validated kernel checkpoint. Alpine, Debian and Ubuntu live together in
+the [`rootfs` branch](https://github.com/farmeixx/sanders-rootfs/tree/rootfs).
 
-## Layout
+## Branches
 
-- `main`: mainline kernel scripts and GitHub Actions entry workflows.
-- `alpine`, `debian`, `ubuntu`: independent headless rootfs builders.
-- `help`: USB SSH, image and ext4 usage.
+- **`main`**: kernel scripts, persistent `ccache` and GitHub Actions YAMLs.
+- **`rootfs`**: `alpine/`, `debian/`, `ubuntu/`, and shared rootfs scripts.
+- **`help`**: recovery, SSH, resize2fs and usage instructions.
+- The original `alpine`, `debian` and `ubuntu` branches remain available
+  for rollback; new rootfs development belongs on `rootfs`.
+- Experimental `sanders-qcdt-reference` is separate, not used by these builders.
 
-## Build
+## Kernel (main)
 
-First run **Build mainline kernel** on `main`. The source branch `msm8953/latest` must provide `arch/arm64/configs/msm8953.config`, `arch/arm64/configs/motorola-sanders.config` and `arch/arm64/boot/dts/qcom/msm8953-motorola-sanders.dts`. The kernel builder starts from ARM64 `defconfig`, then merges **`msm8953.config` followed by `motorola-sanders.config`** with `scripts/kconfig/merge_config.sh -m`, followed by `olddefconfig`. These are configuration fragments, **not** a `sanders_defconfig` target. Missing source files cause an immediate error; no Channel-specific configuration or firmware is imported. The resulting `kernel.config` is included in the checkpoint.
+Run **Build mainline kernel** on `main` or locally on an x86_64 Linux host:
 
-Its validated checkpoint contains `Image.gz`, Sanders DTB, modules, `boot-sanders.img`, SHA256SUMS and revision metadata. Boot image has the Sanders **16 MiB limit**.
+```sh
+bash mainline/run.sh
+```
 
-Run Alpine, Debian or Ubuntu workflows on `main` to check out their own branches and reuse the latest successful, unexpired kernel checkpoint. No Run ID input, no kernel dispatch from rootfs and no cross-repository artifacts.
+The source is `https://gitlab.com/vanadium-oss/motorola-msm8953/mainline/linux.git`,
+branch `msm8953/latest` by default, using ARM64 `defconfig` merged with
+`msm8953.config` then `motorola-sanders.config`. This is **not** the Potter
+configuration. The DTB is `msm8953-motorola-sanders.dtb`; the Android boot
+image keeps the existing `root=PARTLABEL=userdata rootfstype=ext4 rootwait`
+configuration and 16 MiB size limit.
 
-Each distro uploads `*-sanders-rootfs.ext4.zst`, `boot.img`, and `rootfs.ext4`.
+The dedicated workflow caches ARM64 GCC objects with `ccache` (up to 2 GiB
+and compression enabled). The first build populates the cache and later builds
+can reuse compiler objects. The kernel checkpoint preserves `Image.gz`, DTB,
+modules, `boot-sanders.img`, SHA256SUMS and build metadata.
 
-## No Wi-Fi integration
+## Alpine, Debian and Ubuntu (rootfs)
 
-Only the Channel-specific WCNSS firmware blobs, device-specific kernel Wi-Fi requirements and firmware installer are excluded. **Standard distribution userspace packages remain installed**: NetworkManager, WPA supplicant, `iw`, regulatory data, udev and their normal services. These tools do not constitute a device-specific Wi-Fi fix or guarantee hardware Wi-Fi will work. No Android modem/vendor partitions are mounted.
+Select one workflow from the GitHub Actions UI **on branch `main`**:
+`alpine.yml`, `debian.yml` or `ubuntu.yml`.
 
-USB RNDIS/SSH scripts are adapted from Channel but require real Sanders hardware verification. The default USB address is `172.16.42.1`; inherited root SSH access over trusted USB is permissive and should not be exposed elsewhere.
+Each YAML checks out the single `rootfs` branch and runs only one shell command:
+
+```sh
+bash scripts/ci/build-rootfs.sh alpine   # or debian / ubuntu
+```
+
+Rootfs scripts download the **latest successful, unexpired**
+`mainline.yml` checkpoint from this repo's `main`. They do **not** request
+a run ID, dispatch a kernel build, compile the kernel or reuse Channel
+artifacts. If no validated kernel checkpoint is available, rootfs builds fail.
+
+The outputs include `<distro>-sanders-rootfs.ext4.zst`, `boot.img` and
+`rootfs.ext4`, with hashes and metadata. Each distribution retains its
+original build scripts and independent rootfs overlays.
+
+## Firmware / device safety
+
+Unlike Channel, Sanders does **not** have an integrated, tested WCNSS
+firmware package in this builder. The rootfs branch does not carry Channel
+firmware blobs, clone the Channel firmware repo or load Channel Wi-Fi drivers.
+Standard networking userspace packages are retained as before. Sanders
+firmware should be integrated later only from a verified Sanders-specific
+source with known hashes and hardware testing.
+
+USB gadget, SSH and kernel boot are still subject to validation on a real
+Moto G5S Plus. Changes to `ccache` and branch organization do not solve an
+existing hardware boot failure.
