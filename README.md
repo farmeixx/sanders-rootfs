@@ -58,5 +58,5 @@ The Sanders-specific kernel Kconfig fragments, DTB, boot command line and
 kernel build with ccache live on `main` and are not changed by the rootfs
 unification. Headless USB gadget / SSH still requires hardware verification.
 
-Previous `alpine`, `debian` and `ubuntu` branches are left intact temporarily
-for rollback. Use this `rootfs` branch for future distro changes.
+The former `alpine`, `debian` and `ubuntu` branches were consolidated and
+are no longer needed. Use this `rootfs` branch for future distro changes.
