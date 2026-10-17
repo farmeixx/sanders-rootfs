@@ -10,6 +10,8 @@ CHECKPOINT="$(realpath -m "$CHECKPOINT")"
 KERNEL_CHECKPOINT_DIR="$CHECKPOINT" bash "$ROOT/scripts/kernel/validate.sh" --basic
 source "$ROOT/scripts/host-deps.sh"
 install_host_deps "$DISTRO"
+# Clone and validate Sanders firmware once for all distro builders.
+bash "$ROOT/scripts/firmware/sanders.sh" check
 KERNEL_CHECKPOINT_DIR="$CHECKPOINT" bash "$ROOT/scripts/kernel/validate.sh" --full
 KREL="$(cat "$CHECKPOINT/kernel-release.txt")"
 OUT_DIR="$ROOT/out/rootfs/$DISTRO"

@@ -48,11 +48,16 @@ bash ubuntu/run.sh
 
 ## Firmware and hardware safety
 
-The Sanders builders intentionally **do not bundle Channel WCNSS firmware**,
-nor clone the Channel firmware repository. Device-specific Sanders firmware
-integration requires a verified Sanders source, known-good hashes and actual
-hardware testing. Normal distro networking packages may be present but do
-not imply working Sanders Wi-Fi.
+The Sanders builder **does not bundle proprietary firmware**. At build time,
+`scripts/firmware/sanders.sh` fetches the stock Oreo 8.1 firmware from the
+[Sanders-specific GitLab repository](https://gitlab.com/vanadium-oss/motorola-msm8953/mainline/sanders-firmware).
+By default it stages only the WCNSS segments and the default Wi-Fi NV under
+`/lib/firmware`, with no automatic Wi-Fi driver or service activation. No
+Channel firmware is imported. Use `SANDERS_FIRMWARE_MODE=off` to skip firmware
+entirely, or `SANDERS_FIRMWARE_REF` to pin a specific GitLab revision.
+A `SHA256SUMS` manifest at the GitLab repository root is verified when available.
+This is not a guarantee that Sanders Wi-Fi boots or works; hardware testing
+and kernel driver support are still required.
 
 The Sanders-specific kernel Kconfig fragments, DTB, boot command line and
 kernel build with ccache live on `main` and are not changed by the rootfs

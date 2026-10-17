@@ -98,6 +98,8 @@ echo "::endgroup::"
 
 echo "::group::Install sanders headless configuration"
 sudo cp -a "$REPO_ROOT/ubuntu/rootfs/." "$ROOTFS/"
+# Passive stock Sanders WCNSS/NV firmware, obtained from the Sanders GitLab repository.
+bash "$REPO_ROOT/scripts/firmware/sanders.sh" install "$ROOTFS"
 sudo chmod 0755 "$ROOTFS/usr/local/sbin/sanders-usb-gadget"
 
 if [ ! -s "$ROOTFS/etc/machine-id" ]; then

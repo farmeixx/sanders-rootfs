@@ -35,6 +35,8 @@ echo "::endgroup::"
 
 echo "::group::Install Sanders Debian configuration"
 sudo cp -a "$REPO_ROOT/debian/rootfs/." "$ROOTFS/"
+# Passive stock Sanders WCNSS/NV firmware, obtained from the Sanders GitLab repository.
+bash "$REPO_ROOT/scripts/firmware/sanders.sh" install "$ROOTFS"
 sudo chmod 0755 "$ROOTFS/usr/local/sbin/sanders-usb-gadget"
 
 printf '%s\n' sanders | sudo tee "$ROOTFS/etc/hostname" >/dev/null
